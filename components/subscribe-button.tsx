@@ -1,2 +1,16 @@
-'use client'; import { useState } from 'react';
-export function SubscribeButton(){const[busy,setBusy]=useState(false);const[error,setError]=useState('');async function checkout(){setBusy(true);setError('');try{const response=await fetch('/api/billing/checkout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({acceptedSubscriptionTerms:true})});const data=await response.json();if(!response.ok)throw new Error(data.error??'Checkout unavailable');location.assign(data.url);}catch(e){setError(e instanceof Error?e.message:'Checkout failed');setBusy(false);}}return <div><button onClick={checkout} disabled={busy} className="w-full rounded-full bg-brand-600 px-4 py-3 font-semibold text-white disabled:opacity-50">{busy?'Redirecting to Stripe…':'Continue to secure checkout'}</button>{error&&<p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}</div>}
+'use client';
+import { useState } from 'react';
+export function SubscribeButton({ accepted }: { accepted: boolean }) {
+  const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  async function checkout() {
+    if (!accepted) return;
+    setBusy(true); setError('');
+    try {
+      const response = await fetch('/api/billing/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ acceptedSubscriptionTerms: accepted }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Checkout unavailable');
+      location.assign(data.url);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Checkout failed'); setBusy(false); }
+  }
+  return <div><button type="button" onClick={checkout} disabled={busy || !accepted} className="w-full rounded-full bg-brand-600 px-4 py-3 font-semibold text-white disabled:opacity-50">{busy ? 'Redirecting to Stripe…' : 'Continue to secure checkout'}</button>{error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}</div>;
+}

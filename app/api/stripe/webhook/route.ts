@@ -1,3 +1,48 @@
-import { NextResponse } from 'next/server'; import { headers } from 'next/headers'; import Stripe from 'stripe'; import { getStripe } from '@/lib/stripe'; import { createClient as createAdminClient } from '@supabase/supabase-js';
-export const runtime='nodejs'; export const dynamic='force-dynamic';
-export async function POST(request:Request){const signature=headers().get('stripe-signature');const secret=process.env.STRIPE_WEBHOOK_SECRET;if(!signature||!secret)return NextResponse.json({error:'Webhook not configured.'},{status:400});let event:Stripe.Event;try{event=getStripe().webhooks.constructEvent(await request.text(),signature,secret);}catch{return NextResponse.json({error:'Invalid signature.'},{status:400});}const url=process.env.NEXT_PUBLIC_SUPABASE_URL;const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;if(!url||!serviceKey)return NextResponse.json({error:'Webhook storage not configured.'},{status:503});const admin=createAdminClient(url,serviceKey,{auth:{persistSession:false}});const{error:insertError}=await admin.from('stripe_webhook_events').insert({event_id:event.id,event_type:event.type});if(insertError?.code==='23505')return NextResponse.json({received:true,duplicate:true});if(insertError)return NextResponse.json({error:'Could not record event.'},{status:500});try{if(event.type==='checkout.session.completed'){const session=event.data.object as Stripe.Checkout.Session;if(session.mode==='subscription'&&session.subscription){const userId=session.metadata?.supabase_user_id??session.client_reference_id;if(userId){await admin.from('profiles').update({stripe_customer_id:String(session.customer),stripe_subscription_id:String(session.subscription),subscription_status:'active'}).eq('id',userId);}}}else if(['customer.subscription.updated','customer.subscription.deleted'].includes(event.type)){const sub=event.data.object as Stripe.Subscription;const userId=sub.metadata.supabase_user_id;if(userId){const status=sub.status==='active'?'active':sub.status==='trialing'?'trialing':sub.status==='past_due'?'past_due':sub.status==='canceled'?'canceled':'inactive';await admin.from('profiles').update({stripe_customer_id:String(sub.customer),stripe_subscription_id:sub.id,subscription_status:status}).eq('id',userId);}}else if(event.type==='invoice.payment_failed'){const invoice=event.data.object as Stripe.Invoice;const customerId=typeof invoice.customer==='string'?invoice.customer:invoice.customer?.id;if(customerId)await admin.from('profiles').update({subscription_status:'past_due'}).eq('stripe_customer_id',customerId);}return NextResponse.json({received:true});}catch(error){await admin.from('stripe_webhook_events').delete().eq('event_id',event.id);console.error('stripe webhook handler failed',error instanceof Error?error.message:'unknown');return NextResponse.json({error:'Webhook processing failed.'},{status:500});}}
+import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import Stripe from 'stripe';
+import { getStripe } from '@/lib/stripe';
+import { createAdminClient } from '@/lib/supabase/admin';
+export const runtime = 'nodejs'; export const dynamic = 'force-dynamic';
+
+export async function POST(request: Request) {
+  const signature = headers().get('stripe-signature'); const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!signature || !secret) return NextResponse.json({ error: 'Webhook not configured.' }, { status: 400 });
+  let event: Stripe.Event;
+  try { event = getStripe().webhooks.constructEvent(await request.text(), signature, secret); }
+  catch { return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 }); }
+  let admin;
+  try { admin = createAdminClient(); } catch { return NextResponse.json({ error: 'Webhook storage not configured.' }, { status: 503 }); }
+  const { error: insertError } = await admin.from('stripe_webhook_events').insert({ event_id: event.id, event_type: event.type });
+  if (insertError?.code === '23505') return NextResponse.json({ received: true, duplicate: true });
+  if (insertError) return NextResponse.json({ error: 'Could not record event.' }, { status: 500 });
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      if (session.mode === 'subscription' && session.subscription) {
+        const subscription = await getStripe().subscriptions.retrieve(String(session.subscription));
+        const userId = session.metadata?.supabase_user_id ?? session.client_reference_id;
+        if (userId) {
+          const status = subscription.status === 'active' ? 'active' : subscription.status === 'trialing' ? 'trialing' : subscription.status === 'past_due' ? 'past_due' : 'inactive';
+          const { error } = await admin.from('profiles').update({ stripe_customer_id: String(session.customer), stripe_subscription_id: subscription.id, subscription_status: status }).eq('id', userId);
+          if (error) throw error;
+        }
+      }
+    } else if (['customer.subscription.updated', 'customer.subscription.deleted'].includes(event.type)) {
+      const sub = event.data.object as Stripe.Subscription; const userId = sub.metadata.supabase_user_id;
+      if (userId) {
+        const status = sub.status === 'active' ? 'active' : sub.status === 'trialing' ? 'trialing' : sub.status === 'past_due' ? 'past_due' : sub.status === 'canceled' ? 'canceled' : 'inactive';
+        const { error } = await admin.from('profiles').update({ stripe_customer_id: String(sub.customer), stripe_subscription_id: sub.id, subscription_status: status }).eq('id', userId);
+        if (error) throw error;
+      }
+    } else if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as Stripe.Invoice; const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+      if (customerId) { const { error } = await admin.from('profiles').update({ subscription_status: 'past_due' }).eq('stripe_customer_id', customerId); if (error) throw error; }
+    }
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    await admin.from('stripe_webhook_events').delete().eq('event_id', event.id);
+    console.error('stripe webhook handler failed', error instanceof Error ? error.message : 'unknown');
+    return NextResponse.json({ error: 'Webhook processing failed.' }, { status: 500 });
+  }
+}

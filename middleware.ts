@@ -17,6 +17,7 @@ export async function middleware(request: NextRequest) {
       },
     },
   });
+  // Refreshes the auth token; authorization must still be checked in each server route/page.
   await supabase.auth.getUser();
   return response;
 }
