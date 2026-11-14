@@ -1,16 +1,1 @@
-export default function AgeVerificationPage() {
-  return (
-    <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="text-sm font-medium uppercase tracking-[0.2em] text-brand-700">Age verification</div>
-        <h1 className="mt-3 text-4xl font-black text-slate-900">Age and credit rules</h1>
-        <div className="mt-6 space-y-5 text-sm leading-7 text-slate-700">
-          <p>Users may need to complete age verification before receiving their 200 free credits. Credit grants should be tied to a successful verification result and recorded with an auditable status.</p>
-          <p>The proposed NZD $2 age verification charge should be shown before collection, clearly itemized, and subject to the exact refund and failure policy in place. It should only be charged when the verification provider, fee basis, and legal review are complete.</p>
-          <p>The platform should not store unnecessary identity information. Verification should use the minimum data necessary and keep it separate from normal application usage and AI content where practical.</p>
-          <p>Any age rule, fee amount, or verification method must be checked by New Zealand legal counsel before launch.</p>
-        </div>
-      </div>
-    </main>
-  );
-}
+export default function AgeVerificationDraft(){return <main className="prose mx-auto max-w-4xl px-5 py-14"><p><strong>DRAFT FOR NEW ZEALAND LAWYER REVIEW — age verification is disabled unless a provider and approved process are configured.</strong></p><h1>Age verification and free credits</h1><p>Operator: [legal entity]. Effective date: [date].</p><h2>Eligibility and purpose</h2><p>Required age threshold: [define after legal review]. Purpose: [explain why verification is necessary]. Verification provider and method: [provider/method]. Do not launch until the data flow, age rule, user appeal, accessibility, and underage-user handling are approved.</p><h2>Information and retention</h2><p>List information collected by the app and provider, whether documents are viewed or stored, provider locations, access controls, retention/deletion periods, and overseas processing: [details]. Prefer a minimal pass/fail or threshold result where feasible. State contact for access/correction and verification disputes.</p><h2>Fee</h2><p>Proposed fee: NZD $2.00 per [define event]. GST treatment: [confirm]. Recipient and any provider charges: [identify]. Failed/abandoned verification and refund treatment: [define]. The fee remains disabled until all terms are configured, shown before payment, affirmatively accepted, and reviewed by counsel. Do not state that it is “at cost” unless substantiated.</p><h2>Credits</h2><p>After successful verification, the service intends to grant 200 non-cash, non-transferable AI usage credits once per eligible account. State credit cost per action, expiry, failure refunds, and whether additional credits may be purchased: [details]. Credits are not cash or a payment balance. Credit grant is not active until the provider callback and idempotent grant process are tested.</p><p><strong>Lawyer review checklist:</strong> necessity/proportionality, Privacy Act 2020, provider contracts and offshore processing, minimum age and minors, fee/refund disclosures, records retention, accessibility, disputes, and actual verification implementation.</p></main>}

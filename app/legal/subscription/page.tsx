@@ -1,16 +1,1 @@
-export default function SubscriptionPage() {
-  return (
-    <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="text-sm font-medium uppercase tracking-[0.2em] text-brand-700">Subscription terms</div>
-        <h1 className="mt-3 text-4xl font-black text-slate-900">Trial and subscription rules</h1>
-        <div className="mt-6 space-y-5 text-sm leading-7 text-slate-700">
-          <p>DealMap allows a 3-hour full app trial after successful email verification. The trial duration must be visible and clearly disclosed before activation.</p>
-          <p>After the trial, a NZD $20 monthly subscription may apply. The paid subscription should be presented clearly before acceptance, shown in NZD, and managed through Stripe billing in a production environment.</p>
-          <p>Customers should be able to cancel and manage their subscription in their account dashboard. Access timing after cancellation must match the final disclosed policy.</p>
-          <p>All pricing, subscription, and tax disclosures should be reviewed by a New Zealand lawyer and must match the actual billing configuration and refund policy before launch.</p>
-        </div>
-      </div>
-    </main>
-  );
-}
+export default function SubscriptionDraft(){return <main className="prose mx-auto max-w-4xl px-5 py-14"><p><strong>DRAFT FOR NEW ZEALAND LAWYER REVIEW — billing configuration must match this text before release.</strong></p><h1>Trial and subscription terms</h1><p>Operator: [legal name and contact]. Effective date: [date].</p><h2>Three-hour trial</h2><p>If offered, the full-app trial begins when an eligible, email-verified customer affirmatively activates it and ends exactly three hours later. The trial does not automatically authorize a charge. State feature limits and whether a customer can receive one trial only: [details].</p><h2>Monthly subscription</h2><p>Price: NZD $20 every month. GST: [included/additional/not applicable—confirm before publication]. The customer must affirmatively choose the recurring subscription and complete Stripe Checkout. Stripe processes payment; the operator does not receive full card details. State the billing date, renewal, invoice/receipt, failed-payment handling, any grace period, and how price changes are notified: [details].</p><h2>Cancellation and refunds</h2><p>Explain the exact cancellation path, when cancellation takes effect, access through a paid period, and refund process: [details]. Nothing here limits rights that cannot lawfully be excluded. Avoid claiming that cancellation is immediate or that refunds are never available unless that is accurate and lawful.</p><h2>Customer support and disputes</h2><p>Billing contact: [email/address]. Describe response target, billing dispute process, and escalation route: [details].</p><p><strong>Before launch:</strong> test Stripe product price/currency/interval, tax treatment, trial experience, explicit consent, cancellation, refund, receipts, failed payments, webhook entitlements, and customer-support records. Obtain New Zealand legal/tax review.</p></main>}

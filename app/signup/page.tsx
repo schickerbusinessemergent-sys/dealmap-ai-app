@@ -1,62 +1,20 @@
 'use client';
-
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function SignupPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!name || !email || !password) {
-      setMessage('Please complete all fields.');
-      return;
-    }
-
-    const fromLocal = { name, email, password };
-    localStorage.setItem('dealmap-user', JSON.stringify(fromLocal));
-    localStorage.setItem('dealmap-auth', 'true');
-    localStorage.setItem('dealmap-credits', '200');
-    localStorage.setItem('dealmap-age-verified', 'false');
-    setMessage('Account created. Email verification is required before paid features unlock.');
-    window.location.href = '/dashboard';
-  };
-
-  return (
-    <main className="mx-auto max-w-xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 text-sm font-medium uppercase tracking-[0.22em] text-brand-700">Create account</div>
-        <h1 className="text-3xl font-bold text-slate-900">Start building your viral app</h1>
-        <p className="mt-2 text-slate-600">Create an account, verify your email, and unlock AI builder access.</p>
-
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <div>
-            <label htmlFor="name" className="mb-2 block text-sm font-medium text-slate-700">Full name</label>
-            <input id="name" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-brand-500" placeholder="Your full name" />
-          </div>
-          <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">Email</label>
-            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-brand-500" placeholder="you@example.com" />
-          </div>
-          <div>
-            <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">Password</label>
-            <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-brand-500" placeholder="Create a secure password" />
-          </div>
-
-          <button type="submit" className="w-full rounded-full bg-brand-600 px-5 py-3 font-semibold text-white hover:bg-brand-700">
-            Create account
-          </button>
-        </form>
-
-        {message ? <p className="mt-4 text-sm text-slate-700">{message}</p> : null}
-
-        <div className="mt-6 text-sm text-slate-600">
-          Already have an account? <Link href="/login" className="font-semibold text-brand-700">Log in</Link>
-        </div>
-      </div>
-    </main>
-  );
+  const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
+  const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false);
+  async function submit(event: React.FormEvent) {
+    event.preventDefault(); setBusy(true); setMessage('');
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signUp({ email, password, options: { data: { display_name: name }, emailRedirectTo: `${location.origin}/auth/callback?next=/dashboard` } });
+      if (error) throw error;
+      setMessage('Check your email for a verification link. You must verify your address before accessing protected features.');
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Sign-up failed.'); }
+    finally { setBusy(false); }
+  }
+  return <main className="mx-auto max-w-xl px-4 py-16"><div className="rounded-3xl border bg-white p-8 shadow-sm"><h1 className="text-3xl font-bold">Create your account</h1><p className="mt-2 text-slate-600">We will email you a verification link. Your password is handled by Supabase Auth and is never stored by this app.</p><form onSubmit={submit} className="mt-8 space-y-5"><label className="block text-sm">Name<input required autoComplete="name" value={name} onChange={e=>setName(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label><label className="block text-sm">Email<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label><label className="block text-sm">Password<input required minLength={10} type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /><span className="text-xs text-slate-500">Use at least 10 characters and follow your Supabase password policy.</span></label><button disabled={busy} className="w-full rounded-full bg-brand-600 px-5 py-3 font-semibold text-white disabled:opacity-50">{busy?'Creating…':'Create account'}</button></form>{message&&<p role="status" className="mt-4 text-sm">{message}</p>}<p className="mt-6 text-sm">Already registered? <Link href="/login" className="text-brand-700">Sign in</Link></p></div></main>;
 }

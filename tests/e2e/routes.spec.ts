@@ -1,0 +1,4 @@
+import { test, expect } from '@playwright/test';
+test('public navigation and consent banner',async({page})=>{await page.goto('/');await expect(page.getByRole('link',{name:'DealMap'})).toBeVisible();await expect(page.getByRole('link',{name:'AI Creator'})).toBeVisible();await page.goto('/pricing');await expect(page.getByRole('heading',{name:/DealMap subscription/i})).toBeVisible();});
+test('signup page does not store passwords in browser storage',async({page})=>{await page.goto('/signup');await expect(page.getByLabel('Password')).toBeVisible();await expect(page.getByText(/never stored by this app/i)).toBeVisible();});
+test('legal review pages are reachable',async({page})=>{for(const path of ['/legal/privacy','/legal/terms','/legal/subscription','/legal/age-verification']){await page.goto(path);await expect(page.locator('h1')).toBeVisible();}});
